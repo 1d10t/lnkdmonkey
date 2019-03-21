@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [lnkdmonkey] scroll down contact list
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/mynetwork/invite-connect/connections/*
 // @include      https://www.linkedin.com/mynetwork/invite-connect/connections/*

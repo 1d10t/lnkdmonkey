@@ -8,7 +8,7 @@
 // @grant        https
 // @run-at       context-menu
 // @updateUrl    https://github.com/1d10t/lnkdmonkey/raw/master/scroll-down-contact-list.js
-// @donnloadUrl  https://github.com/1d10t/lnkdmonkey/raw/master/scroll-down-contact-list.js
+// @downloadUrl  https://github.com/1d10t/lnkdmonkey/raw/master/scroll-down-contact-list.js
 // ==/UserScript==
 
 (function() {
