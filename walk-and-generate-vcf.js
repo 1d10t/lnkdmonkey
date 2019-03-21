@@ -14,7 +14,7 @@
 (function() {
     'use strict';
 
-    if(!confirm('Используя автоматизарованные средства для доступа к "Услугам" LinkedIn, Вы нарушаете п.8.2.m пользовательского соглашения. Продолжить?')) return;
+    if(!confirm('РСЃРїРѕР»СЊР·СѓСЏ Р°РІС‚РѕРјР°С‚РёР·Р°СЂРѕРІР°РЅРЅС‹Рµ СЃСЂРµРґСЃС‚РІР° РґР»СЏ РґРѕСЃС‚СѓРїР° Рє "РЈСЃР»СѓРіР°Рј" LinkedIn, Р’С‹ РЅР°СЂСѓС€Р°РµС‚Рµ Рї.8.2.m РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕРіРѕ СЃРѕРіР»Р°С€РµРЅРёСЏ. РџСЂРѕРґРѕР»Р¶РёС‚СЊ?')) return;
 
     // GET LIST
     var dd = [].map.call(document.querySelectorAll('div.mn-connection-card'), function(card){
@@ -264,13 +264,13 @@
 
                 switch(type){
                     case 'phone':
-                        value = ['TEL', strip_value.replace(/[^0-9a-zА-Яа-яЁё\w\+\/#]/gi,'')];
+                        value = ['TEL', strip_value.replace(/[^0-9a-zРђ-РЇР°-СЏРЃС‘\w\+\/#]/gi,'')];
                         // array('TYPE'=>'VOICE,CELL,HOME,WORK,MSG')
-                        if(value_subtype == '(Рабочий)'){
+                        if(value_subtype == '(Р Р°Р±РѕС‡РёР№)'){
                             value.push({'TYPE': 'WORK'});
-                        }else if(value_subtype == '(Мобильный)'){
+                        }else if(value_subtype == '(РњРѕР±РёР»СЊРЅС‹Р№)'){
                             value.push({'TYPE': 'CELL'});
-                        }else if(value_subtype == '(Домашний)'){
+                        }else if(value_subtype == '(Р”РѕРјР°С€РЅРёР№)'){
                             value.push({'TYPE': 'HOME'});
                         }
                         break;
@@ -299,9 +299,9 @@
                         // date connected
                         break;
                     case 'birthday':
-                        // 6 сентября
+                        // 6 СЃРµРЅС‚СЏР±СЂСЏ
                         // (\d{4})(\d{2})(\d{2}) // array('BDAY', "{$t[1]}-{$t[2]}-{$t[3]}")
-                        // (new Date('09-6')).toString() = Thu Sep 06 2001 00:00:00 GMT+0400 (Москва, летнее время)
+                        // (new Date('09-6')).toString() = Thu Sep 06 2001 00:00:00 GMT+0400 (РњРѕСЃРєРІР°, Р»РµС‚РЅРµРµ РІСЂРµРјСЏ)
                         break;
                     default:
                         console.log('unknown contact type', type, full_value, e_type);
