@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [lnkdmonkey] walk new and outdated contacts, then generate VCF
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/mynetwork/invite-connect/connections/*
 // @include      https://www.linkedin.com/mynetwork/invite-connect/connections/*
@@ -181,18 +181,260 @@
             var wait_interval = setInterval(function(){
                 if(!window.router) return;
                 clearInterval(wait_interval);
+                link.click();
                 resolve(window.router);
             }, 100);
         });
     }
 
+    var phonecode_length = {
+        "1": "10",
+        "20": "10",
+        "213": "9",
+        "218": "10",
+        "223": "8",
+        "226": "8",
+        "227": "8",
+        "228": "8",
+        "230": "8",
+        "231": "7,8",
+        "233": "9",
+        "234": "8",
+        "235": "8",
+        "241": "7",
+        "246": "7",
+        "262": "9",
+        "268": "8",
+        "27": "9",
+        "290": "4",
+        "298": "5",
+        "299": "6",
+        "30": "10",
+        "31": "9",
+        "32": "9",
+        "33": "9",
+        "34": "9",
+        "351": "9",
+        "352": "9",
+        "353": "9",
+        "355": "9",
+        "357": "8",
+        "358": "10",
+        "359": "9",
+        "36": "9",
+        "370": "8",
+        "371": "8",
+        "373": "8",
+        "374": "6",
+        "375": "9",
+        "380": "9",
+        "381": "8",
+        "381": "9",
+        "382": "8",
+        "383": "8",
+        "385": "9",
+        "387": "8",
+        "39": "10,13",
+        "41": "9",
+        "420": "9",
+        "421": "9",
+        "43": "10,11",
+        "44": "10",
+        "45": "8",
+        "46": "7,10",
+        "47": "8",
+        "48": "9",
+        "49": "10",
+        "500": "5",
+        "501": "6,7",
+        "503": "7",
+        "506": "8",
+        "507": "8",
+        "51": "9",
+        "52": "10",
+        "55": "11",
+        "56": "9",
+        "57": "10",
+        "58": "7",
+        "593": "9",
+        "594": "9",
+        "596": "9",
+        "60": "7",
+        "61": "9",
+        "62": "9,10",
+        "63": "10",
+        "64": "9",
+        "65": "8",
+        "66": "9",
+        "670": "8",
+        "672": "6",
+        "677": "7",
+        "680": "7",
+        "682": "5",
+        "683": "4",
+        "686": "5",
+        "687": "6",
+        "689": "6",
+        "691": "7",
+        "692": "7",
+        "7": "10",
+        "84": "9",
+        "852": "8",
+        "855": "9",
+        "86": "11",
+        "880": "10",
+        "886": "9",
+        "90": "7,11",
+        "91": "10",
+        "92": "10",
+        "93": "9",
+        "94": "7",
+        "95": "8,10",
+        "960": "7",
+        "963": "9",
+        "965": "8",
+        "966": "9",
+        "967": "9",
+        "968": "8",
+        "970": "9",
+        "971": "9",
+        "972": "9",
+        "973": "8",
+        "974": "8",
+        "976": "8",
+        "977": "10",
+        "98": "10",
+        "995": "9",
+    };
+
+    var location_phonecode = {
+        "Украина": "380",
+        "Россия": "7",
+        "Netherlands": "31",
+        "San Francisco Bay Area": "1",
+        "Greater New York City Area": "1",
+        "California": "1",
+        "Germany": "49",
+        "Spain": "34",
+        "New York": "1",
+        "New Jersey": "1",
+        "Беларусь": "375",
+        "India": "91",
+        "Индия": "91",
+        "United Kingdom": "44",
+        "Connecticut": "1",
+        "Армения": "374",
+        "США": "1",
+        "Washington": "1",
+        "Великобритания": "44",
+        "Израиль": "972",
+        "ОАЭ": "971",
+        "Greater Seattle Area": "1",
+        "Poland": "48",
+        "Washington D.C. Metro Area": "1",
+        "Ирландия": "353",
+        "Испания": "34",
+        "Thailand": "66",
+        "Moldova": "373",
+        "Texas": "1",
+        "Greater Los Angeles Area": "1",
+        "Philippines": "63",
+        "Эстония": "372",
+        "Bulgaria area": "41",
+        "Ohio Area": "1",
+        "Greater Atlanta Area": "1",
+        "Greater Chicago Area": "1",
+        "Switzerland": "41",
+        "Аргентина": "54",
+        "Казахстан": "7",
+        "Канада": "1",
+        "Нигерия": "234",
+        "Пакистан": "92",
+        "Саудовская Аравия": "966",
+        "Филиппины": "63",
+        "Belgium": "32",
+        "Virginia": "1",
+        "Austria area": "44",
+        "Pennsylvania": "1",
+        "Michigan": "1",
+        "Florida": "1",
+        "Canada": "49",
+        "South Africa": "358",
+        "Arizona": "1",
+        "Ukraine": "380",
+        "Illinois": "1",
+        "Cincinnati Area": "1",
+        "Dallas/Fort Worth Area": "1",
+        "Australia": "61",
+        "Greater Boston Area": "1",
+        "Greater Denver Area": "1",
+        "Greater Philadelphia Area": "1",
+        "Greater Pittsburgh Area": "1",
+        "Greater San Diego Area": "1",
+        "Greater St. Louis Area": "1",
+        "Finland": "48",
+        "Missouri Area": "1",
+        "Malaysia": "60",
+        "Miami/Fort Lauderdale Area": "1",
+        "Minnesota": "1",
+        "Delaware": "1",
+        "Oregon": "1",
+        "RU": "7",
+        "North Carolina": "1",
+        "Israel": "972",
+        "Brazil": "55",
+        "Ireland": "353",
+        "Canada Area": "1",
+        "District Of Columbia": "1",
+        "Massachusetts": "1",
+        "China": "86",
+        "Азербайджан": "994",
+        "Венгрия": "36",
+        "Гонконг": "852",
+        "Грузия": "995",
+        "Доминиканская Республика": "1829",
+        "Египет": "20",
+        "Индонезия": "62",
+        "Катар": "974",
+        "Латвия": "371",
+        "Италия": "39",
+        "Сингапур": "65",
+        "Узбекистан": "998",
+        "Финляндия": "358",
+        "Чешская Республика": "420",
+        "Шри-Ланка": "94"
+    };
+
+    function get_international_phonecode_for_location(location){
+        var ls = location.split(', ');
+        for(let i=0; i<ls.length; i++){ // 0, 1, 2
+            let l = ls.slice(i).join(', ');
+            if(typeof(location_phonecode[l]) != 'undefined') return location_phonecode[l];
+        }
+    }
+    
+    function fix_international_phone(phone, location){
+        //'0079057461132x123'.match(/(\+?)((\d*)(\d{10}))(\b|[^\d])/)
+        //(6) ["0079057461132x", "", "0079057461132", "007", "9057461132", "x", index: 0, input: "0079057461132x123", groups: undefined]
+        var int_code = get_international_phonecode_for_location(location);
+        if(!int_code){
+            console.log('no international phone code for', location);
+            return phone;
+        }
+        var int_len = phonecode_length[int_code];
+        //var t = phone.match(/(\+?)((\d*)(\d{10}))(\b|[^\d])/);
+        var t = phone.match(new RegExp('(\\+?|\\b)((\\d*)(\\d{'+int_len+'}))(?:\\b|[^\\d])'));
+        if(!t || t[1] == '+') return phone;
+        return phone.replace(t[2], '+'+int_code+t[4]);
+    }
 
 
 
     async function read_user_contacts(){
         var lines = [], promises = [];
+        var work_location = document.querySelector('h3.pv-top-card-section__location').innerText;
 
-        lines.push(['ADR', ['','',document.querySelector('h3.pv-top-card-section__location').innerText,'','',''], {'TYPE': 'WORK'}]);
+        lines.push(['ADR', ['','',work_location,'','',''], {'TYPE': 'WORK'}]);
         lines.push(['UID', 'LIN-'+window.location.href.match(/\/in\/([^/]+)/)[1]]);
         lines.push(['REV', (new Date()).toISOString()]);
 
@@ -239,7 +481,6 @@
             }));
         }
 
-        // PHOTO;ENCODING=b;TYPE=JPEG:MIICajCCAdOgAwIBAgICBEUwDQYJKoZIhvc
 
 
         [].map.call(document.querySelectorAll('section.pv-contact-info section.pv-contact-info__contact-type'), function(e_type){
@@ -264,7 +505,8 @@
 
                 switch(type){
                     case 'phone':
-                        value = ['TEL', strip_value.replace(/[^0-9a-zА-Яа-яЁё\w\+\/#]/gi,'')];
+                    	var phone = fix_international_phone(strip_value.replace(/[^0-9a-zА-Яа-яЁё\w\+\/#]/gi,''), work_location);
+                        value = ['TEL', phone];
                         // array('TYPE'=>'VOICE,CELL,HOME,WORK,MSG')
                         if(value_subtype == '(Рабочий)'){
                             value.push({'TYPE': 'WORK'});
