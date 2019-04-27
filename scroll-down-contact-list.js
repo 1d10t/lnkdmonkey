@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         [lnkdmonkey] scroll down contact list
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/1d10t/lnkdmonkey
 // @version      0.2
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/mynetwork/invite-connect/connections/*
@@ -13,9 +13,9 @@
 
 (function() {
     'use strict';
-
+    
     if(!confirm('Используя автоматизарованные средства для доступа к "Услугам" LinkedIn, Вы нарушаете п.8.2.m пользовательского соглашения. Продолжить?')) return;
-
+    
     // SCROLL LIST
     window.scrollTo(0, 0);
     var prev_pos = 0, scroll_interval = setInterval(function(){
@@ -32,6 +32,7 @@
             //next_pos = Math.floor(visualViewport.pageTop - visualViewport.height/4);
             clearInterval(scroll_interval);
             console.log('scrolling done');
+            if(confirm("Scrolling done!\r\nSay Thank You -->")) window.location.href = 'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ZLRJHLVMQ9MEL&item_name=lnkdmonkey-donate&currency_code=EUR&source=url';
             return;
         }
         console.log('scroll to ', next_pos);

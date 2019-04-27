@@ -1,21 +1,21 @@
 // ==UserScript==
-// @name         [lnkdmonkey] walk new and outdated contacts, then generate VCF
-// @namespace    http://tampermonkey.net/
-// @version      0.2
+// @name         [lnkdmonkey] walk new and outdated contacts
+// @namespace    https://github.com/1d10t/lnkdmonkey
+// @version      0.1
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/mynetwork/invite-connect/connections/*
 // @include      https://www.linkedin.com/mynetwork/invite-connect/connections/*
 // @grant        https
 // @run-at       context-menu
-// @updateUrl    https://github.com/1d10t/lnkdmonkey/raw/master/walk-and-generate-vcf.js
-// @downloadUrl  https://github.com/1d10t/lnkdmonkey/raw/master/walk-and-generate-vcf.js
+// @updateUrl    https://github.com/1d10t/lnkdmonkey/raw/master/walk-new-and-outdated.js
+// @downloadUrl  https://github.com/1d10t/lnkdmonkey/raw/master/walk-new-and-outdated.js
 // ==/UserScript==
 
 (function() {
     'use strict';
-
+    
     if(!confirm('Используя автоматизарованные средства для доступа к "Услугам" LinkedIn, Вы нарушаете п.8.2.m пользовательского соглашения. Продолжить?')) return;
-
+    
     // GET LIST
     var dd = [].map.call(document.querySelectorAll('div.mn-connection-card'), function(card){
         var d = {
@@ -103,15 +103,73 @@
             ;
         });
     }
+    
+    function calc_abs_top(e){
+    	var o = 0;
+    	do{
+    		if(typeof(e.offsetTop) != 'number') return;
+    		o += e.offsetTop;
+    	}while(e = e.offsetParent);
+    	return o;
+    }
+
+    function scroll_page() {
+    	return new Promise((rv) => {
+    		
+    		window.scrollTo(0, 0);
+    		var prev_pos = 0, scroll_interval = setInterval(function(){
+    			var
+    				loader = document.querySelector('li-icon[type="loader"]'),
+    				max_pos = document.body.scrollHeight,
+    				next_page_pos = Math.floor(visualViewport.pageTop + visualViewport.height/2),
+    				next_pos = Math.min(next_page_pos, max_pos),//max_pos//
+    				loader_top = loader ? calc_abs_top(loader) : null
+    			;
+    			if(loader && loader_top && loader_top < (visualViewport.pageTop + visualViewport.height)){
+    				console.log('loader running', loader, loader_top, (visualViewport.pageTop + visualViewport.height));
+    				return;
+    			}
+    			if(next_pos == prev_pos){
+    				//next_pos = Math.floor(visualViewport.pageTop - visualViewport.height/4);
+    				clearInterval(scroll_interval);
+    				console.log('scrolling done');
+    				rv();
+    				return;
+    			}
+    			console.log('scroll to ', next_pos);
+    			window.scrollTo(0, next_pos);
+    			prev_pos = next_pos;
+    		}, 200);
+    		
+    		
+    	});
+    	
+    }
+
+
+    function read_skills(){
+    	return [].map.call(document.querySelectorAll('.pv-skill-category-entity__name-text'), e => e.innerText);
+    }
+
+    function wait_expand_all_cards(){
+    	return new Promise(rv => {
+    		const s = 'div.core-rail[role="main"] button.artdeco-container-card-action-bar[aria-expanded="false"]';
+    		let ebs = document.querySelectorAll(s);
+    		if(!ebs.length) return rv();
+    		[].map.call(ebs, b => b.click());
+    		var i = setInterval(() => document.querySelectorAll(s).length || (clearInterval(i), rv()), 100);
+    	});
+    }
 
     function walk_outdated_contacts(){
         store = get_idb_store();
-        var upperBoundOpenKeyRange = IDBKeyRange.upperBound(unix_timestamp()-30*24*3600);
+        var upperBoundOpenKeyRange = IDBKeyRange.upperBound(unix_timestamp()-60*24*3600);
         var index = store.index('loaded');
         var uris = [];
         var do_walk = async function(){
             var router = await get_router();
             uris = uris.shuffle();
+            let walked = 0;
             while(uris.length){
                 var uri = uris.shift(), url = '/in/'+uri;
                 var transition = router.transitionTo(url);
@@ -123,7 +181,9 @@
                     }
                     continue;
                 }
-                await (function(){ return new Promise(function(resolve){ setTimeout(function(){ resolve(); }, 1000); }) })();
+                //await (function(){ return new Promise(function(resolve){ setTimeout(function(){ resolve(); }, 1000); }) })();
+                await scroll_page();
+                await wait_expand_all_cards();
                 var url2 = url + '/detail/contact-info';
                 transition = router.transitionTo(url2);
                 nav_ok = await wait_nav(url2);
@@ -140,6 +200,8 @@
                         store.put(obj).onsuccess = resolve;
                     }
                 }) })();
+                if(!(++walked%50) && !confirm(`Walked ${walked} profiles! Continue?`))
+                	return;
             }
         };
         index.openCursor(upperBoundOpenKeyRange).onsuccess = async function(event) {
@@ -147,7 +209,7 @@
             if (!cursor){
                 await do_walk();
                 console.log('walking done');
-                generate_vcard_file();
+                if(confirm("Walking done, now You can generate VCF files!\r\nSay Thank You -->")) window.location.href = 'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ZLRJHLVMQ9MEL&item_name=lnkdmonkey-donate&currency_code=EUR&source=url';
                 return;
             }
             // Do something with the matches.
@@ -187,7 +249,7 @@
         });
     }
 
-    var phonecode_length = {
+    var phonecode_local_length = {
         "1": "10",
         "20": "10",
         "213": "9",
@@ -421,13 +483,14 @@
             console.log('no international phone code for', location);
             return phone;
         }
-        var int_len = phonecode_length[int_code];
+        var local_len = phonecode_local_length[int_code] || '7,13';
         //var t = phone.match(/(\+?)((\d*)(\d{10}))(\b|[^\d])/);
-        var t = phone.match(new RegExp('(\\+?|\\b)((\\d*)(\\d{'+int_len+'}))(?:\\b|[^\\d])'));
+        var t = phone.match(new RegExp('(\\+?|\\b)((\\d*)(\\d{'+local_len+'}))(?:\\b|[^\\d])'));
         if(!t || t[1] == '+') return phone;
         return phone.replace(t[2], '+'+int_code+t[4]);
     }
 
+    
 
 
     async function read_user_contacts(){
@@ -451,7 +514,8 @@
 
         e = document.querySelector('h2.pv-top-card-section__headline');
         if(e) lines.push(['TITLE', e.innerText]);
-
+        
+        /*
         var b = document.querySelector('button.pv-top-card-section__summary-toggle-button');
         if(b){
             b.click();
@@ -462,7 +526,62 @@
                 }, 1000);
             }));
         }
+        */
+        
+        
+        var notes = [];
+        
+        var skills = read_skills();
+        if(skills.length){
+        	//lines.push(['NOTE', "# Skills:\n\n"+skills.join(', ')]);
+        	notes.push("*** Skills ***\n\n"+skills.join(', '));
+        	//skills.map((skill, index) => { lines.push(['EXPERTISE', skill, {INDEX:index+1, LEVEL:'average'}]); });
+        }
 
+        
+        var accomplishments = [].map.call(document.querySelectorAll('div.pv-accomplishments-block__content'), p => (
+        	p.querySelector('h3.pv-accomplishments-block__title').innerText
+        	+ ': '
+        	+ [].map.call(p.querySelectorAll('li.pv-accomplishments-block__summary-list-item'), e => e.innerText).join(', ')
+        ));
+        if(accomplishments.length){
+        	notes.push("*** Accomplishments ***\n\n"+accomplishments.join("\n"));
+        	//lines.push(['NOTE', "Accomplishments:\n"+accomplishments.join("\n")])
+        }
+        
+        
+        await (new Promise(rv => {
+        	var exps = [];
+        	
+        	[].map.call(document.querySelectorAll('li.pv-position-entity'), p => {
+            	[].map.call(document.querySelectorAll('a.lt-line-clamp__more'), a => a.click());
+            	setTimeout(() => exps.push(p.innerText), 50);
+            });
+
+        	setTimeout(() => {
+        		if(exps.length){
+        			//lines.push(['NOTE', "Experience:\n"+exps.join("\n\n----\n\n")]);
+        			notes.push("*** Experience ***\n\n"+exps.join("\n\n--------\n\n"));
+        		}
+        		rv(exps);
+        	}, 100);
+        }));
+        
+        if(notes.length){
+        	lines.push(['NOTE', notes.join("\n\n========\n\n")]);
+        }
+        
+        /**/
+        var es = document.querySelectorAll('p.pv-top-card-section__summary-text span.lt-line-clamp__raw-line, p.pv-top-card-section__summary-text span.lt-line-clamp__line');
+        if(es){
+        	var summary = [].map.call(es, e => e.innerText).join("\n");
+        	if(summary){
+        		//lines.push(['NOTE', "Summary:\n"+summary]);
+        		notes.push("*** Summary ***\n\n"+accomplishments.join("\n"));
+        	}
+        }
+        
+        
         e = document.querySelector('div.pv-top-card-section__photo:not(.ghost-person)');
         if(e){
             promises.push(new Promise(function(resolve){
@@ -490,7 +609,7 @@
             [].map.call(e_type.querySelectorAll('.pv-contact-info__ci-container'), function(e){
 
                 var
-                full_value = e.innerText.trim(),
+                	full_value = e.innerText.trim(),
                     strip_value,
                     value_subtype,
                     value
@@ -524,6 +643,8 @@
                         break;
                     case 'ims':
                         value = ['NICKNAME', full_value];
+                        var xt = ({'(Google Talk)': 'X-GTALK', '(Yahoo Messenger)': 'X-YAHOO', '(Skype)': 'X-SKYPE', '(AIM)': 'X-AIM', '(ICQ)': 'X-ICQ'})[value_subtype];
+                        if(xt) lines.push([xt, strip_value]);
                         break;
                     case 'vanity-url':
                         value = ['URL', 'https://'+strip_value];
@@ -533,6 +654,7 @@
                         break;
                     case 'twitter':
                         value = ['URL', 'https://twitter.com/'+strip_value];
+                        lines.push(['X-TWITTER', strip_value]);
                         break;
                     case 'address':
                         value = ['ADR', ['','',strip_value,'','','']];
@@ -559,76 +681,5 @@
         return lines;
     }
 
-
-    String.prototype.replaceAll = function(search, replacement) {
-        var target = this;
-        return target.split(search).join(replacement);
-    };
-
-    function vc_escape_arg(str){
-        var tr = {"\r\n": '\\n', "\n": '\\n', ',': '\\,', ';': '\\;', ':': '\\:'};
-        for(var k in tr){
-            str = str.replaceAll(k, tr[k]);
-        }
-        return str;
-    }
-
-    function vc_line(type, args, params){
-        if(typeof(params) == 'undefined') params = {};
-        if(typeof(args) != 'object') args = [args];
-        var s = type;
-        for(var k in params){
-            var v = params[k];
-            //console.log('param', k, '=', v);
-            s += ';' + k + '=' + (typeof(v) == 'object' ? v.join(',') : v);
-        }
-        s += ':' + args.map(vc_escape_arg).join(';');
-        return s;
-    }
-
-    function vc(data_rows){
-
-        var rows = [].concat.call([['BEGIN','VCARD'],['VERSION','3.0']], data_rows, [['END','VCARD']]);
-
-        //console.log('rows',rows);
-
-        var s = '';
-
-        for(var row of rows){
-            //console.log('row',row);
-            s += vc_line.apply(this, row) + "\r\n";
-        }
-
-        return s;
-    }
-
-    function get_file(data, filename, mime){
-        if(!mime) mime = 'application/octet-stream';
-
-        var
-        url = window.URL.createObjectURL(new Blob([data], {type: mime})),
-            a = document.createElement('a')
-
-        ;
-        a.href = url;
-        a.download = filename;
-        a.click();
-
-        setTimeout(function(){
-            a.remove();
-            window.URL.revokeObjectURL(url);
-        }, 1000);
-
-    }
-
-    function generate_vcard_file(){
-        get_idb_store().getAll().onsuccess = (e => {
-            var s = '';
-            for(var contact of e.target.result)
-                if(contact.rows){
-                    s += vc(contact.rows);
-                };
-            get_file(s, 'linkedin-contacts.vcf', 'text/vcard');
-        });
-    }
+    
 })();
