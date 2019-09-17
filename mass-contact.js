@@ -69,7 +69,7 @@
                         return;
                     }
                     //var eok = qs('div.send-invite__actions button.button-primary-large');
-                    let eok = qs('div.send-invite__actions button.ml1');
+                    let eok = qs('div.send-invite button.ml1');
                     if(eok){
                         msge('CLICK OK BUTTON');
                         eok.click();
