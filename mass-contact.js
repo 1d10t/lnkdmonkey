@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [lnkdmonkey] mass contact from search pages
 // @namespace    https://github.com/1d10t/lnkdmonkey
-// @version      0.2
+// @version      0.3
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/search/results/people/*
 // @include      https://www.linkedin.com/search/results/people/*
