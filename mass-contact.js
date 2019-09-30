@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [lnkdmonkey] mass contact from search pages
 // @namespace    https://github.com/1d10t/lnkdmonkey
-// @version      0.3
+// @version      0.4
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/search/results/people/*
 // @include      https://www.linkedin.com/search/results/people/*
@@ -55,7 +55,7 @@
                 msge('CLICK CONTACT');
                 eb.click();
                 setTimeout(function(){
-                    if(qs('artdeco-modal.ip-fuse-limit-alert')){
+                    if(qs('.artdeco-modal.ip-fuse-limit-alert')){
                         msge('LIMIT ALERT FOUND');
                         qs('button.ip-fuse-limit-alert__primary-action').click();
                         clearInterval(contact_interval);
