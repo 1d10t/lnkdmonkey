@@ -49,7 +49,6 @@
         }, 2*1000);
         // enable contact interval
         contact_interval = setInterval(function(){
-            //let eb = qs('button[aria-label*="Установить контакт"]');
             let eb = qs('button.search-result__action-button.search-result__actions--primary:not([disabled])');
             if(eb){
                 msge('CLICK CONTACT');
@@ -62,13 +61,12 @@
                         restart_timeout = setTimeout(contact_all, 60*60*1000);
                         return;
                     }
-                    if(qs('section.modal input#email')){
+                    if(qs('.artdeco-modal input#email')){
                         msge('EMAIL INPUT FOUND');
                         eb.remove();
-                        qs('button.send-invite__cancel-btn').click();
+                        qs('button.artdeco-modal__dismiss').click();
                         return;
                     }
-                    //var eok = qs('div.send-invite__actions button.button-primary-large');
                     let eok = qs('div.send-invite button.ml1');
                     if(eok){
                         msge('CLICK OK BUTTON');
