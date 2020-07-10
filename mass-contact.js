@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [lnkdmonkey] mass contact from search pages
 // @namespace    https://github.com/1d10t/lnkdmonkey
-// @version      0.4
+// @version      0.5
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/search/results/people/*
 // @include      https://www.linkedin.com/search/results/people/*
@@ -13,9 +13,11 @@
 
 (function() {
     'use strict';
-    
+
     if(!confirm('Используя автоматизарованные средства для доступа к "Услугам" LinkedIn, Вы нарушаете п.8.2.m пользовательского соглашения. Продолжить?')) return;
-    
+
+    var note = prompt('Введите приветсвенное сообщение', '');
+
     var contact_interval, restart_timeout, scroll_timeout;
     const
         qs = document.querySelector.bind(document),
@@ -24,6 +26,8 @@
     ;
     function ce(t,a){ var f=document.createElement(t); for(var k in a) f.setAttribute(k,a[k]); return f; };
     function msge(s){ var e=qs('#mfe'); if(!e) e=ce('div',{id:'mfe',title:'linkedin mass contact status',style:'display:block;position:fixed;top:130px;left:0;writing-mode:vertical-rl;text-orientation:mixed;border:1px solid red;background:yellow;color:brown;padding:7px'}), qs('body').append(e); e.innerText=s; };
+    function fire_change(el){ var evt = document.createEvent('HTMLEvents'); evt.initEvent('change', true, true); el.dispatchEvent(evt); }
+    function val(el, value){ el.value = value; fire_change(el); }
 
     msge('INIT MASS CONTACT');
 
@@ -69,15 +73,27 @@
                     }
                     let eok = qs('div.send-invite button.ml1');
                     if(eok){
-                        msge('CLICK OK BUTTON');
-                        eok.click();
+                        if(note && note.length){
+                            let enote = qs('div.send-invite button.mr1');
+                            msge('CLICK NOTE BUTTON');
+                            enote.click();
+                            setTimeout(() => {
+                                msge('FILL NOTE');
+                                val(qs('.send-invite__custom-message'), note);
+                            }, 100);
+                        }
+                        setTimeout(() => {
+                            eok = qs('div.send-invite button.ml1');
+                            msge('CLICK OK BUTTON');
+                            eok.click();
+                        }, 200);
                     }else{
                         msge('NO OK BUTTON');
                         eb.remove();
                     }
                 }, 2*1000);
             }else{
-            	let en = qs('button.artdeco-pagination__button--next');
+                let en = qs('button.artdeco-pagination__button--next');
                 if(en){
                     msge('CLICK NEXT PAGE BUTTON');
                     en.click();
