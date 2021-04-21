@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [lnkdmonkey] mass contact from search pages
 // @namespace    https://github.com/1d10t/lnkdmonkey
-// @version      0.5
+// @version      0.6
 // @author       Sergey S Yaglov
 // @match        https://www.linkedin.com/search/results/people/*
 // @include      https://www.linkedin.com/search/results/people/*
@@ -21,6 +21,8 @@
     var contact_interval, restart_timeout, scroll_timeout;
     const
         qs = document.querySelector.bind(document),
+        qsa = document.querySelectorAll.bind(document),
+        qsf = (q, f) => Array.from(qsa(q)).filter(f),
         col = console.log.bind(console),
         coe = console.error.bind(console)
     ;
@@ -39,6 +41,10 @@
                 msge('STOP MASS CONTACT');
             }
     }, 500);
+    
+    function scroll_down(){
+         window.scrollTo(0, document.body.scrollHeight-500);
+    }
 
     function contact_all(){
         msge('RUN MASS CONTACT');
@@ -49,11 +55,15 @@
         }
         // scroll to bottom of page to show pagination
         scroll_timeout = setTimeout(function(){
-            window.scrollTo(0, document.body.scrollHeight-500);
+            scroll_down();
         }, 2*1000);
+        
         // enable contact interval
         contact_interval = setInterval(function(){
-            let eb = qs('button.search-result__action-button.search-result__actions--primary:not([disabled])');
+            let eb = qsf(
+                '.entity-result button.artdeco-button.artdeco-button--2.artdeco-button--secondary:not([disabled])',
+                e => /Connect/.test(e.innerText)
+            )[0];
             if(eb){
                 msge('CLICK CONTACT');
                 eb.click();
@@ -93,13 +103,16 @@
                     }
                 }, 2*1000);
             }else{
-                let en = qs('button.artdeco-pagination__button--next');
-                if(en){
-                    msge('CLICK NEXT PAGE BUTTON');
-                    en.click();
-                }else{
-                    msge('NO NEXT PAGE BUTTON');
-                }
+                scroll_down();
+                setTimeout(function(){
+                    let en = qs('button.artdeco-pagination__button--next');
+                    if(en){
+                        msge('CLICK NEXT PAGE BUTTON');
+                        en.click();
+                    }else{
+                        msge('NO NEXT PAGE BUTTON');
+                    }
+                }, 1000);
             }
         }, 5*1000);
     }
